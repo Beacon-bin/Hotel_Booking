@@ -2,7 +2,9 @@
   require('connection_file.php');
   session_start();
  
-  $sql_get_total_hotel_details="SELECT id,lodge_name,lodge_location FROM local_admin  
+  $sql_get_total_hotel_details="SELECT id,lodge_name,lodge_location,image_01,image_02,image_03,image_04
+   FROM local_admin JOIN room_images
+  ON local_admin.id=room_images.local_admin_id
   WHERE (TIME(NOW()) BETWEEN opening_time AND closing_time) AND lodge_status=1";
 
   $sql_get_total_rooms="SELECT COUNT(ROOM_NO) AS total_rooms,min(rate_hr) AS minimum_rate FROM ROOMS 
@@ -16,7 +18,7 @@
 <!DOCTYPE html>
 <html lang="en">
   
-  <head>
+  <head >
     <title>Project Name</title>
     <meta charset="utf-8" http-equiv="content-type" content="text/html">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -90,7 +92,7 @@
       <div class="site-mobile-menu-body"></div>
     </div>
     
-    <header class="site-navbar container py-0 bg-white" role="banner">
+    <header class="site-navbar container py-0 bg-white fixed-top" role="banner">
 
       <div class="container"> 
         <div class="row align-items-center">
@@ -99,19 +101,35 @@
             <h1 class="mb-0 site-logo"><a href="#" class="text-black mb-0">Project<span class="text-primary">Name</span>  </a></h1>
           </div>
           <div class="col-12 col-md-10 d-none d-xl-block">
-            <nav class="site-navigation position-relative text-right" role="navigation">
+            <nav class="site-navigation position-relative text-right" role="navigation" >
 
               <ul class="site-menu js-clone-nav mr-auto d-none d-lg-block">
                 <li class="active"><a href="#">Home</a></li>
-                <li><a href="#about">About Us</a></li>
+                <li><a href="aboutus.php">About Us</a></li>
                 <li><a href="contact.php">Contact</a></li>
                 <li class="has-children border-left pl-xl-4">
                   <a href="#">Account</a>
                   <ul class="dropdown">
-                  <li><a href="view_booked_details.php">Booked Details</a></li>
-                    <li><a href="dashboard.php">Login As User</a></li>
+                  <?php
+                      if(isset($_SESSION['user_id']))
+                      {
+
+                      ?>
+                      <li><a href="view_booked_details.php">Booked Details</a></li>
+                      <li><a href="history.php">History</a></li>
+                      <li><a href="settings.php">Settings</a></li>
+                      <li><a href="logout.php">Logout</a></li>
+                     <?php
+                      }
+                      else
+                      {
+                        ?>
+                    <li><a href="user login.php">Login As User</a></li>
                     <li><a href="admin login.html">Login As Admin</a></li>
                     <li><a href="registration.php">Register</a></li>
+                    <?php
+                      }
+                  ?>
                   </ul>
                 </li>
               </ul>
@@ -230,7 +248,7 @@
               <?php
                  if(isset($_SESSION['reg_status'])) //show a message in home page if the registration is successful.
                  {
-
+                   //$_SESSION['user_id']
                  ?>
                   <div class="col-md-12 mt-5 pt-5">
                     <div class="col-sm-6 mt-5 mx-auto">
@@ -269,10 +287,13 @@
 
 
                           // sql query for retreiving lodges with given location
-                          $sql_search_lodges_home=$db_connection->prepare("SELECT id,ucase(lodge_location) AS lodge_location,lodge_name,COUNT(ROOM_NO) AS total_rooms,rate_hr AS rate 
-                          FROM local_admin JOIN ROOMS ON local_admin.id=rooms.local_admin_id 
+                          $sql_search_lodges_home=$db_connection->prepare("SELECT id,
+                          ucase(lodge_location) AS lodge_location,lodge_name,COUNT(ROOM_NO) AS total_rooms,
+                          rate_hr AS rate,image_01,image_02,image_03,image_04 
+                          FROM local_admin JOIN ROOMS ON local_admin.id=rooms.local_admin_id
+                          JOIN room_images ON room_images.local_admin_id=local_admin.id 
                           WHERE user_id IS NULL AND type=? AND lodge_status=1 AND lodge_location=lcase(?)
-                          GROUP BY LOCAL_ADMIN_ID HAVING SUM(CAPACITY)>=? 
+                          GROUP BY rooms.LOCAL_ADMIN_ID HAVING SUM(CAPACITY)>=? 
                           ORDER BY capacity");
 
                           //binding parameters
@@ -298,11 +319,15 @@
 
                           <div class="col-lg-6">
                             <div class="d-block d-md-flex listing vertical">
-                              <a href="dashboard.php?lodge_id=<?php echo $href;?>" class="img d-block" style="background-image: url('images/room\ image\ 001.jpg')"></a>
+                            <?php
+                              $image_url="images//room images//$rows[image_01]"; 
+                            ?>
+                              <a href="dashboard.php?lodge_id=<?php echo $href;?>" class="img d-block" 
+                             style="background-image: url('<?php echo $image_url?>')"></a>
                               <div class="lh-content">
                                 <span class="category">
 
-                                  <?php echo $rows['total_rooms']." Rooms"; ?>
+                                  <?php echo $rows['total_rooms']." Rooms";?>
 
                                 </span>
                                 <span class="category">Starting - ₹ <?php echo $rows['rate']; ?>/hr</span>
@@ -368,7 +393,7 @@
                                     {
                                       ?>
                          
-                                        <div class="alert alert-danger w-100">
+                                        <div class="alert alert-danger w-100 py-5 text-center">
                                           <strong>Sorry !</strong> No lodges match your selection criteria.
                                         </div>
                             
@@ -384,9 +409,12 @@
                                 $rate_slider=$_POST['slider'];
 
                                  // sql query for retreiving lodges with given location
-                                 $sql_search_lodges_home="SELECT id,ucase(lodge_location) AS lodge_location,lodge_name,COUNT(ROOM_NO) AS total_rooms,rate_hr AS rate 
+                                 $sql_search_lodges_home="SELECT id,ucase(lodge_location) AS lodge_location,lodge_name,
+                                 COUNT(ROOM_NO) AS total_rooms,rate_hr AS rate,image_01,image_02,image_03,image_04 
                                  FROM local_admin JOIN ROOMS ON local_admin.id=rooms.local_admin_id 
-                                 WHERE user_id IS NULL AND type='$room_type' AND rate_hr<=$rate_slider AND lodge_status=1 AND lodge_location=lcase('$search_location')";
+                                 JOIN room_images ON local_admin.id=room_images.local_admin_id
+                                 WHERE user_id IS NULL AND type='$room_type' AND rate_hr<=$rate_slider 
+                                 AND lodge_status=1 AND lodge_location=lcase('$search_location')";
 
                                   $associative_array['car_parking']=(isset($_POST['parking']))? 1 : 0 ;
                                   $associative_array['security']=(isset($_POST['security']))? 1 : 0 ;
@@ -398,7 +426,7 @@
                                       $sql_search_lodges_home.=" AND $key=$value "; // adds this field to sql command if it is checked ie 1
                                     }
                                 
-                                 $sql_search_lodges_home.=" GROUP BY LOCAL_ADMIN_ID HAVING SUM(CAPACITY)>=$no_of_guests 
+                                 $sql_search_lodges_home.=" GROUP BY rooms.LOCAL_ADMIN_ID HAVING SUM(CAPACITY)>=$no_of_guests 
                                  ORDER BY capacity";
                                  
                                 
@@ -423,10 +451,11 @@
 
                           <div class="col-lg-6">
                             <div class="d-block d-md-flex listing vertical">
-                              <a 
-                              href="dashboard.php?lodge_id=<?php echo $href;?>" 
-                              class="img d-block" 
-                              style="background-image: url('images/room\ image\ 001.jpg')"></a>
+                            <?php
+                              $image_url="images//room images//$rows[image_01]"; 
+                            ?>
+                              <a href="dashboard.php?lodge_id=<?php echo $href;?>" class="img d-block" 
+                             style="background-image: url('<?php echo $image_url?>')"></a>
                               <div class="lh-content">
                                 <span class="category">
 
@@ -539,7 +568,12 @@
                 
                             <div class="col-lg-6">
                               <div class="d-block d-md-flex listing vertical">
-                                <a href="dashboard.php?lodge_id=<?php echo $local_admin_id?>" class="img d-block" style="background-image: url('images/room\ image\ 001.jpg')"></a>
+                              <?php
+                              $image_url="images//room images//$row[image_01]"; 
+                            ?>
+                              <a href="dashboard.php?lodge_id=<?php echo $local_admin_id?>" class="img d-block" 
+                             style="background-image: url('<?php echo $image_url?>')"></a>
+                               
                                 <div class="lh-content">
                                   <span class="category">
 
@@ -640,19 +674,8 @@
                         ?>
               
             </div>
-
-            <!-- <div class="col-12 mt-5 text-center">
-              <div class="custom-pagination">
-                <span>1</span>
-                <a href="#">2</a>
-                <a href="#">3</a>
-                <span class="more-page">...</span>
-                <a href="#">10</a>
-              </div>
-            </div> -->
-
           </div>
-          <div class="col-lg-3 ml-auto" >
+          <div class="col-lg-3 ml-auto" style="border-left:1px solid rgba(112,128,144,0.3);" >
             <div style="position:sticky;top:0;">
             <div class="mb-5">
               <h3 class="h5 text-black mb-3">Filters</h3>
@@ -860,150 +883,12 @@
       </div>
     </div>
 
-    <div class="site-section bg-light" id="about">
-        <div class="container">
-          <div class="row justify-content-center mb-5">
-            <div class="col-md-7 text-center border-primary">
-              <h2 class="font-weight-light text-primary">Why Us</h2>
-              <p class="color-black-opacity-5">See Our Daily News &amp; Updates</p>
-            </div>
-          </div>
-          <div class="row mb-3 align-items-stretch">
-            <div class="col-md-6 col-lg-4 mb-4 mb-lg-4">
-              <div class="h-entry">
-                <img src="images/hero_1.jpg" alt="Image" class="img-fluid rounded">
-                <h2 class="font-size-regular"><a href="#" class="text-black">Many People Selling Online</a></h2>
-                <div class="meta mb-3">by Mark Spiker<span class="mx-1">&bullet;</span> Jan 18, 2019 <span class="mx-1">&bullet;</span> <a href="#">News</a></div>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus eligendi nobis ea maiores sapiente veritatis reprehenderit suscipit quaerat rerum voluptatibus a eius.</p>
-              </div> 
-            </div>
-            <div class="col-md-6 col-lg-4 mb-4 mb-lg-4">
-              <div class="h-entry">
-                <img src="images/hero_1.jpg" alt="Image" class="img-fluid rounded">
-                <h2 class="font-size-regular"><a href="#" class="text-black">Many People Selling Online</a></h2>
-                <div class="meta mb-3">by Mark Spiker<span class="mx-1">&bullet;</span> Jan 18, 2019 <span class="mx-1">&bullet;</span> <a href="#">News</a></div>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus eligendi nobis ea maiores sapiente veritatis reprehenderit suscipit quaerat rerum voluptatibus a eius.</p>
-              </div> 
-            </div>
-            <div class="col-md-6 col-lg-4 mb-4 mb-lg-4">
-              <div class="h-entry">
-                <img src="images/hero_1.jpg" alt="Image" class="img-fluid rounded">
-                <h2 class="font-size-regular"><a href="#" class="text-black">Many People Selling Online</a></h2>
-                <div class="meta mb-3">by Mark Spiker<span class="mx-1">&bullet;</span> Jan 18, 2019 <span class="mx-1">&bullet;</span> <a href="#">News</a></div>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus eligendi nobis ea maiores sapiente veritatis reprehenderit suscipit quaerat rerum voluptatibus a eius.</p>
-              </div>
-            </div>
-  
-            <div class="col-12 text-center mt-4">
-              <!-- <a href="#" class="btn btn-primary rounded py-2 px-4 text-white">View All Posts</a> -->
-            </div>
-          </div>
-        </div>
-      </div>
-    <div class="site-section bg-white">
-      <div class="container">
-
-        <div class="row justify-content-center mb-5">
-          <div class="col-md-7 text-center border-primary">
-            <h2 class="font-weight-light text-primary">Testimonials</h2>
-          </div>
-        </div>
-
-        <div class="slide-one-item home-slider owl-carousel">
-          <div>
-            <div class="testimonial">
-              <figure class="mb-4">
-                <img src="images/person_3.jpg" alt="Image" class="img-fluid mb-3">
-                <p>John Smith</p>
-              </figure>
-              <blockquote>
-                <p>&ldquo;Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur unde reprehenderit aperiam quaerat fugiat repudiandae explicabo animi minima fuga beatae illum eligendi incidunt consequatur. Amet dolores excepturi earum unde iusto.&rdquo;</p>
-              </blockquote>
-            </div>
-          </div>
-          <div>
-            <div class="testimonial">
-              <figure class="mb-4">
-                <img src="images/person_2.jpg" alt="Image" class="img-fluid mb-3">
-                <p>Christine Aguilar</p>
-              </figure>
-              <blockquote>
-                <p>&ldquo;Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur unde reprehenderit aperiam quaerat fugiat repudiandae explicabo animi minima fuga beatae illum eligendi incidunt consequatur. Amet dolores excepturi earum unde iusto.&rdquo;</p>
-              </blockquote>
-            </div>
-          </div>
-
-          <div>
-            <div class="testimonial">
-              <figure class="mb-4">
-                <img src="images/person_4.jpg" alt="Image" class="img-fluid mb-3">
-                <p>Robert Spears</p>
-              </figure>
-              <blockquote>
-                <p>&ldquo;Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur unde reprehenderit aperiam quaerat fugiat repudiandae explicabo animi minima fuga beatae illum eligendi incidunt consequatur. Amet dolores excepturi earum unde iusto.&rdquo;</p>
-              </blockquote>
-            </div>
-          </div>
-
-          <div>
-            <div class="testimonial">
-              <figure class="mb-4">
-                <img src="images/person_5.jpg" alt="Image" class="img-fluid mb-3">
-                <p>Bruce Rogers</p>
-              </figure>
-              <blockquote>
-                <p>&ldquo;Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur unde reprehenderit aperiam quaerat fugiat repudiandae explicabo animi minima fuga beatae illum eligendi incidunt consequatur. Amet dolores excepturi earum unde iusto.&rdquo;</p>
-              </blockquote>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-    
-  <footer class="site-footer" >
-        <div class="container">
-          <div class="row">
-            <div class="col-md-12">
-              <div class="row text-center">
-                <div class="col-md-4">
-                  <h2 class="footer-heading mb-4">About</h2>
-                  <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Provident rerum unde possimus molestias dolorem fuga, illo quis fugiat!</p>
-                </div>
-                
-                <div class="col-md-4">
-                  <h2 class="footer-heading mb-4">Navigations</h2>
-                  <ul class="list-unstyled">
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Services</a></li>
-                    <li><a href="#">Testimonials</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                  </ul>
-                </div>
-                <div class="col-md-4">
-                  <h2 class="footer-heading mb-4">Follow Us</h2>
-                  <a href="#" class="pl-0 pr-3"><span class="icon-facebook"></span></a>
-                  <a href="#" class="pl-3 pr-3"><span class="icon-twitter"></span></a>
-                  <a href="#" class="pl-3 pr-3"><span class="icon-instagram"></span></a>
-                  <a href="#" class="pl-3 pr-3"><span class="icon-linkedin"></span></a>
-                </div>
-              </div>
-            </div>
-            
-          </div>
-          <div class="row pt-5 mt-5 text-center">
-            <div class="col-md-12">
-              <div class="border-top pt-5">
-              <p>
-              Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved
-              </p>
-              </div>
-            </div>
-            
-          </div>
-        </div>
-      </footer>
-  </div>
+ 
+    <!-- Footer part here -->
+    <?php
+    include("footer.php");
+    ?>
+ </div>
 
   <script src="js/jquery-3.3.1.min.js"></script>
   <script src="js/jquery-migrate-3.0.1.min.js"></script>
