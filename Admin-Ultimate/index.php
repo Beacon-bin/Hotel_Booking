@@ -1,10 +1,9 @@
 <?php
   require('connection_file.php');
-  session_start();
+  //session_start();
   
   
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -60,7 +59,7 @@
             </a>
             <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="notificationDropdown">
               <p class="mb-0 font-weight-normal float-left dropdown-header">Notifications</p>
-              <a class="dropdown-item">
+              <a class="dropdown-item" href="individual.php">
                 <div class="item-thumbnail">
                   <div class="item-icon bg-success">
                     <i class="mdi mdi-information mx-0"></i>
@@ -79,11 +78,11 @@
               <span class="nav-profile-name">Louis Barnett</span>
             </a>
             <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
-              <a class="dropdown-item">
+              <a class="dropdown-item" href="Settings.html">
                 <i class="mdi mdi-settings text-primary"></i>
                 Settings
               </a>
-              <a class="dropdown-item">
+              <a class="dropdown-item" href="../index.html">
                 <i class="mdi mdi-logout text-primary"></i>
                 Logout
               </a>
@@ -114,22 +113,10 @@
             </a>
             <div class="collapse" id="ui-basic">
               <ul class="nav flex-column sub-menu">
-                <li class="nav-item"> <a class="nav-link" href="pages/ui-features/typography.html">New requests</a></li>
-                <li class="nav-item"> <a class="nav-link" href="pages/ui-features/typography.html">All Lodges</a></li>
+                <li class="nav-item"> <a class="nav-link" href="lodge details individual.html">New requests</a></li>
+                <li class="nav-item"> <a class="nav-link" href="lodge list.html">Active Lodges</a></li>
               </ul>
             </div>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="pages/forms/basic_elements.html">
-              <i class="mdi mdi-view-headline menu-icon"></i>
-              <span class="menu-title">User Ratings</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="pages/charts/chartjs.html">
-              <i class="mdi mdi-chart-pie menu-icon"></i>
-              <span class="menu-title">Profit Chart</span>
-            </a>
           </li>
         </ul>
       </nav>
@@ -159,11 +146,21 @@
 
          <div class="row bg-white pt-3">
             <div class="col-md-4 grid-margin stretch-card">
-                <a href="#" style="text-decoration: none;">
+                <a href="pending list.php" style="text-decoration: none;">
+                <?php
+                  $sql_get_count_new_requests = $db_connection->prepare("SELECT COUNT(id) as pending FROM local_admin WHERE lodge_status = 0");
+                  $sql_get_count_new_requests->execute();
+
+                 $result=$sql_get_count_new_requests->get_result();
+                 $row=$result->fetch_assoc();
+                 //print_r($row);
+                
+
+                ?>
                     <div class="card">
                         <div class="card-body">
                           <p class="card-title">New requests</p>
-                          <h1>13</h1>
+                          <h1><?php  echo $row['pending'];?></h1>
                           <h4>Waiting for approval</h4>
                           <p class="text-muted">Lorem ipsum dolor sit amet.</p>                 
                         </div>
@@ -173,53 +170,36 @@
                  </div>
                
                  <div class="col-md-4 grid-margin stretch-card">
-                <a href="#" style="text-decoration: none;">
+                <a href="lodge list.php" style="text-decoration: none;">
                     <div class="card">
                         <div class="card-body">
-                          <p class="card-title">Update requests</p>
-                          <h1>18</h1>
-                          <h4>Lodges requested for update</h4>
+                          <?php
+                            //all loadge query
+                                  $sql_get_count_loadge_details = $db_connection->prepare("SELECT COUNT(id) as 
+                                  alllodge FROM local_admin WHERE  lodge_status=1");
+                                  $sql_get_count_loadge_details->execute();
+
+
+                                  $result=$sql_get_count_loadge_details->get_result();
+                                  $row=$result->fetch_assoc();
+                          ?>
+                          <p class="card-title">Lodge Details</p>
+                          <h1><?php  echo $row['alllodge'];?></h1>
+                          <h4>Active lodges</h4>
                           <p class="text-muted">Lorem ipsum dolor sit amet.</p>                 
                         </div>
                         <img src="images/canvas.png" alt="no image" class="img-fluid">
                       </div>
                     </a>
                  </div>
-                 <div class="col-md-4 grid-margin stretch-card">
-                <a href="#" style="text-decoration: none;">
-                    <div class="card">
-                        <div class="card-body">
-                          <p class="card-title">User Ratings</p>
-                          <h1>213</h1>
-                          <h4>Users rated on lodges</h4>
-                          <p class="text-muted">Lorem ipsum dolor sit amet.</p>                 
-                        </div>
-                        <img src="images/canvas.png" alt="no image" class="img-fluid">
-                      </div>
-                    </a>
-                 </div>
-                 <div class="col-md-4 grid-margin stretch-card">
-                    <a href="#" style="text-decoration: none;">
-                        <div class="card">
-                            <div class="card-body">
-                              <p class="card-title">Total profit</p>
-                              <h1>$4013</h1>
-                              <h4>Profit acquired</h4>
-                              <p class="text-muted">Lorem ipsum dolor sit amet.</p>                 
-                            </div>
-                            <img src="images/canvas.png" alt="no image" class="img-fluid">
-                          </div>
-                        </a>
-                     </div>
-                
-         </div>
+                 
         
         </div>
         <!-- content-wrapper ends -->
         <!-- partial:partials/_footer.html -->
         <footer class="footer bg-white">
           <div class="d-sm-flex justify-content-center justify-content-sm-between">
-            <span class="text-muted d-block text-center text-sm-left d-sm-inline-block">Copyright © companyname 2020</span>
+            <span class="text-muted d-block text-center text-sm-left d-sm-inline-block">Copyright © Project name 2020</span>
           </div>
         </footer>
         <!-- partial -->
